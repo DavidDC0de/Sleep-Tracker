@@ -9,6 +9,15 @@ all_sleep_records = [] #all sleep records in the file
 last_night_sleep = [] #sleep records from last sleep 
 sleep_records = [] #sleep records with start and end time (sorted)
 
+#sleep value map:
+sleep_values = {
+    "HKCategoryValueSleepAnalysisInBed": 0,
+    "HKCategoryValueSleepAnalysisAwake": 0,
+    "HKCategoryValueSleepAnalysisAsleepCore": 0,
+    "HKCategoryValueSleepAnalysisAsleepDeep": 0,
+    "HKCategoryValueSleepAnalysisAsleepREM": 0
+}
+
 #loop through all health to find the sleep records
 for child in root: 
     if child.attrib.get("type") == "HKCategoryTypeIdentifierSleepAnalysis":
@@ -44,3 +53,15 @@ start, _, record = last_night_sleep[0]
 _, end, _ = last_night_sleep[-1]
 print("duration: ", end - start)
 
+#update the dict with the time allocated for each stage of the sleep 
+for start, end, record in last_night_sleep:
+    start = datetime.strptime(record.attrib["startDate"], "%Y-%m-%d %H:%M:%S %z")
+    end = datetime.strptime(record.attrib["endDate"], "%Y-%m-%d %H:%M:%S %z")
+    time = (end - start).total_seconds() / 60
+
+    sleep_values[record.attrib.get("value")] += time
+
+for value in sleep_values:
+    print(value, sleep_values[value])
+
+    
