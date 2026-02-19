@@ -6,16 +6,28 @@ tree = ET.parse(r"C:\Users\david\Downloads\export\apple_health_export\export.xml
 root = tree.getroot()
 
 all_sleep_records = [] #all sleep records in the file
-last_night_sleep = [] #sleep records from last sleep 
 sleep_records = [] #sleep records with start and end time (sorted)
+last_night_sleep = [] #sleep records from last sleep 
 
 #sleep value map:
+sleep_stage_map = {
+    "HKCategoryValueSleepAnalysisAwake": "Awake",
+    "HKCategoryValueSleepAnalysisAsleepCore": "Core",
+    "HKCategoryValueSleepAnalysisAsleepDeep": "Deep",
+    "HKCategoryValueSleepAnalysisAsleepREM": "REM"
+}
+
 sleep_values = {
-    "HKCategoryValueSleepAnalysisInBed": 0,
-    "HKCategoryValueSleepAnalysisAwake": 0,
-    "HKCategoryValueSleepAnalysisAsleepCore": 0,
-    "HKCategoryValueSleepAnalysisAsleepDeep": 0,
-    "HKCategoryValueSleepAnalysisAsleepREM": 0
+    "date": None,
+    "sleep_start": None,
+    "sleep_end": None,
+    "total_minutes": 464,
+    "stages": {
+        "Awake": 0,
+        "Core": 0,
+        "Deep": 0,
+        "REM": 0
+    }
 }
 
 #loop through all health to find the sleep records
@@ -49,19 +61,18 @@ for i in range(len(sleep_records) - 2, -1, -1):
     else:
         break
 
-start, _, record = last_night_sleep[0]
-_, end, _ = last_night_sleep[-1]
-print("duration: ", end - start)
 
-#update the dict with the time allocated for each stage of the sleep 
+#update the sleep_values dict with all the details about the last night sleep 
+sleep_values["date"] = (datetime.strptime(last_night_sleep[0][2].attrib["startDate"], "%Y-%m-%d %H:%M:%S %z")).strftime("%Y-%m-%d") #get the date 
+sleep_values["sleep_start"] = (datetime.strptime(last_night_sleep[0][2].attrib["startDate"], "%Y-%m-%d %H:%M:%S %z")).strftime("%H:%M:%S") #start time of the sleep
+sleep_values["sleep_end"] = (datetime.strptime(last_night_sleep[-1][2].attrib["endDate"], "%Y-%m-%d %H:%M:%S %z")).strftime("%H:%M:%S") #end time of the sleep
+
 for start, end, record in last_night_sleep:
     start = datetime.strptime(record.attrib["startDate"], "%Y-%m-%d %H:%M:%S %z")
     end = datetime.strptime(record.attrib["endDate"], "%Y-%m-%d %H:%M:%S %z")
     time = (end - start).total_seconds() / 60
 
-    sleep_values[record.attrib.get("value")] += time
+    sleep_values["stages"][sleep_stage_map[record.attrib.get("value")]] += time
 
-for value in sleep_values:
-    print(value, sleep_values[value])
 
     
