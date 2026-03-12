@@ -23,7 +23,7 @@ def extract_last_sleep(xml_path: str) -> dict:
         "date": None,
         "sleep_start": None,
         "sleep_end": None,
-        "total_minutes": 464,
+        "total_minutes": None,
         "stages": {
             "Awake": 0,
             "Core": 0,
@@ -76,4 +76,5 @@ def extract_last_sleep(xml_path: str) -> dict:
 
         sleep_values["stages"][sleep_stage_map[record.attrib.get("value")]] += time
 
+    sleep_values["total_minutes"] = sleep_values["stages"]["Awake"] + sleep_values["stages"]["REM"] + sleep_values["stages"]["Core"] + sleep_values["stages"]["Deep"]
     return(sleep_values)

@@ -2,6 +2,8 @@ import { Text, Button, View, ScrollView } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
 
+import SleepResults from "../components/SleepResults";
+
 export default function Index() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [sleepResults, setSleepResults] = useState<any>(null); // State to store Python's response
@@ -54,26 +56,22 @@ export default function Index() {
   };
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 40, alignItems: 'center' }}>
-      <Text style={{ fontSize: 20, marginBottom: 20, fontWeight: 'bold' }}>
-        HealthKit Sleep Analyzer
-      </Text>
-
-      <Button title="Select Health Export XML" onPress={pickFile} />
-      
-      {fileName && (
-        <Text style={{ marginTop: 10, color: 'green' }}>
-          Selected: {fileName}
-        </Text>
-      )}
-
-      {/* 3. Display the result from Python */}
-      {sleepResults && (
-        <View style={{ marginTop: 30, padding: 15, backgroundColor: '#f0f0f0', borderRadius: 8, width: '100%' }}>
-          <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>Results from Backend:</Text>
-          <Text>{JSON.stringify(sleepResults, null, 2)}</Text>
-        </View>
-      )}
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: '#161616' }}> 
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 20 }}>
+        {!sleepResults ? (
+          // SHOW THIS ONLY IF NO DATA
+          <View style={{ alignItems: 'center' }}>
+            <Text style={{ fontSize: 24, color: '#ffffff', marginBottom: 20, fontWeight: 'bold' }}>
+              Sleep Analyzer
+            </Text>
+            <Button title="Select Health Export XML" onPress={pickFile} />
+            {fileName && <Text style={{ color: '#ffffff', marginTop: 10 }}>{fileName}</Text>}
+          </View>
+        ) : (
+          // SHOW THIS ONCE BACKEND RESPONDS
+          <SleepResults data={sleepResults} />
+        )}
+      </ScrollView>
+    </View>
   );
 }
