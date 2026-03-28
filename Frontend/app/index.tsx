@@ -1,77 +1,165 @@
-import { Text, Button, View, ScrollView } from "react-native";
-import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
+import {useRouter} from "expo-router"; //allow to change between files 
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import SleepResults from "../components/SleepResults";
+const router = useRouter(); //create a router
 
 export default function Index() {
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [sleepResults, setSleepResults] = useState<any>(null); // State to store Python's response
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  // 1. The logic to handle the file upload
-  const uploadFile = async (fileAsset: any) => {
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
     try {
-      const formData = new FormData();
-
-      // Convert URI to Blob for Web compatibility
-      const response = await fetch(fileAsset.uri);
-      const blob = await response.blob();
-
-      // "file" must match: async def upload_health_data(file: UploadFile...)
-      formData.append("file", blob, fileAsset.name);
-
-      console.log("Uploading to backend...");
-
-      const uploadResponse = await fetch("http://127.0.0.1:8000/upload", {
+      const response = await fetch("http://127.0.0.1:8000/login", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
       });
 
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json();
-        console.error("Backend rejected it:", errorData);
-        return;
+      const data = await response.json();
+      // this just a test to see it works 
+      console.log("This the backend for the login: ", data.message) 
+      if (data.success) {
+        Alert.alert("Success", data.message);
+        //replace screen with the upload screen and send over the email and user id 
+        router.replace({
+          pathname: "/upload",
+          params: {email: data.email}
+        })
+      } else {
+        Alert.alert("Error", data.message);
       }
-
-      const data = await uploadResponse.json();
-      console.log("Success! Data received:", data);
-      setSleepResults(data); // Store the JSON dict from Python
-      
     } catch (error) {
-      console.error("Upload failed:", error);
+      Alert.alert("Error", "Cannot connect to backend");
     }
   };
 
-  // 2. The logic to pick the file
-  const pickFile = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["application/xml", "text/xml"],
-      copyToCacheDirectory: true
-    });
+  const handleSignUp = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
 
-    if (!result.canceled) {
-      setFileName(result.assets[0].name);
-      uploadFile(result.assets[0]);
+    try {
+      const response = await fetch("http://127.0.0.1:8000/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+      // this just a test to see it works 
+      console.log("This the backend for the signup: ", data.message) 
+
+      if (data.success) {
+        Alert.alert("Success", data.message);
+        setEmail("");
+        setPassword("");
+      } else {
+        Alert.alert("Error", data.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Cannot connect to backend");
     }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#161616' }}> 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 20 }}>
-        {!sleepResults ? (
-          // SHOW THIS ONLY IF NO DATA
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 24, color: '#ffffff', marginBottom: 20, fontWeight: 'bold' }}>
-              Sleep Analyzer
-            </Text>
-            <Button title="Select Health Export XML" onPress={pickFile} />
-            {fileName && <Text style={{ color: '#ffffff', marginTop: 10 }}>{fileName}</Text>}
-          </View>
-        ) : (
-          // SHOW THIS ONCE BACKEND RESPONDS
-          <SleepResults data={sleepResults} />
-        )}
-      </ScrollView>
-    </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Login / Sign Up</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Sign In</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.signUpButton]}
+          onPress={handleSignUp}
+        >
+          <Text style={styles.buttonText}>Sign Up</Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 25,
+    backgroundColor: "#f2f2f2",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 30,
+    textAlign: "center",
+  },
+  input: {
+    backgroundColor: "white",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  button: {
+    backgroundColor: "#000000",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  signUpButton: {
+    backgroundColor: "#2196F3",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+});
