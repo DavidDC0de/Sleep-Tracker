@@ -1,9 +1,11 @@
 import pandas
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
+import sqlite3
 
 
-def extract_last_sleep(xml_path: str) -> dict:
+def extract_last_sleep(xml_path: str, email) -> dict:
+
     tree = ET.parse(xml_path)
     root = tree.getroot()
 
@@ -24,6 +26,7 @@ def extract_last_sleep(xml_path: str) -> dict:
         "sleep_start": None,
         "sleep_end": None,
         "total_minutes": None,
+        "sleep_score": None,
         "stages": {
             "Awake": 0,
             "Core": 0,
@@ -77,4 +80,60 @@ def extract_last_sleep(xml_path: str) -> dict:
         sleep_values["stages"][sleep_stage_map[record.attrib.get("value")]] += time
 
     sleep_values["total_minutes"] = sleep_values["stages"]["Awake"] + sleep_values["stages"]["REM"] + sleep_values["stages"]["Core"] + sleep_values["stages"]["Deep"]
+    
+    #calculate sleep score: 
+    actual_sleep_time = sleep_values["total_minutes"] - sleep_values["stages"]["Awake"]
+
+    #quantity of sleep (target 8 hours = 480 min)
+    quantity_score = min(100, (actual_sleep_time / 480) * 100)
+
+    #quality of sleep
+    restorative_sleep_total = sleep_values["stages"]["Deep"] + sleep_values["stages"]["REM"]
+    restorative_percentage = restorative_sleep_total / actual_sleep_time
+
+    quality_score = min(100, (restorative_percentage / 0.45) * 100)
+    restoration_score = max(0, 100 - (sleep_values["stages"]["Awake"] * 2))
+
+    #final score 
+    final_score = (
+        (quantity_score * 0.40) + 
+        (quality_score * 0.40) + 
+        (restoration_score * 0.20)
+    )
+
+    sleep_values["sleep_score"] = round(final_score)
+    
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+
+
+    #save the data of the sleep in the history table 
+    cursor.execute("""
+        SELECT id FROM sleep_data 
+        WHERE user_email = ? AND date = ?
+    """, (email, sleep_values["date"]))
+    
+    existing_record = cursor.fetchone()
+
+    if existing_record:
+        print("alredy in the history")
+        conn.close()
+        
+    else:
+        # DATA IS NEW: Proceed with the INSERT
+        cursor.execute("""
+            INSERT INTO sleep_data (user_email, date, sleep_start, total_minutes, sleep_score)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+            email,
+            sleep_values["date"],
+            sleep_values["sleep_start"],
+            sleep_values["total_minutes"],
+            sleep_values["sleep_score"]
+        ))
+        conn.commit()
+        conn.close()
+
     return(sleep_values)
+
+    

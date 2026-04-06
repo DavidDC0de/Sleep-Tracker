@@ -92,7 +92,13 @@ export default function Index() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+
       <View style={styles.container}>
+        <View style={styles.logoGroup}>
+          <Text style={styles.logo}>Sleep</Text>
+          <Text style={styles.logo}>Track</Text>
+          <Text style={styles.logo}>Repeat</Text>
+        </View>
         <Text style={styles.title}>Login / Sign Up</Text>
 
         <TextInput
@@ -132,23 +138,40 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 25,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#161616",
+  },
+  logoGroup: {
+    alignItems: 'center', 
+    width: '100%',
+    marginVertical: 50,
+    
+  },
+  logo: {
+    color: '#fff',
+    fontSize: 48,           
+    fontWeight: '900',      
+    textTransform: 'uppercase',
+    lineHeight: 44,         
+    letterSpacing: -1,  
+    textAlign: "center"    
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
     marginBottom: 30,
     textAlign: "center",
+    color: "#ffffff"
   },
   input: {
-    backgroundColor: "white",
+    backgroundColor: "#424242",
+    color: "white",
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
     fontSize: 16,
   },
   button: {
-    backgroundColor: "#000000",
+    backgroundColor: "#272727",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",

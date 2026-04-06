@@ -3,8 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // For the bed/clock icons
 
 export default function SleepResults({ data }: { data: any }) {
-  // We'll assume a dummy score for now until you build your Python logic
-  const sleepScore = 85; 
+  const sleepScore = data.sleep_score; 
 
   return (
     <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
